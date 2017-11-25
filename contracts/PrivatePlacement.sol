@@ -330,7 +330,6 @@ contract PrivatePlacement {
       bool isSent = msg.sender.call.gas(3000000).value(change)();
       require(isSent);
     }
-
     //balances[msg.sender] = balances[msg.sender].add(valueWEI);
   }
 
