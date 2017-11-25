@@ -1,0 +1,9 @@
+contract Nafen is MintableToken {
+
+  string public constant name = "Nafen";
+
+  string public constant symbol = "NFN";
+
+  uint32 public constant decimals = 18;
+
+}
