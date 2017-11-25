@@ -205,20 +205,7 @@ contract MintableToken is StandardToken, Ownable {
     _;
   }
 
-  modifier onlyCrowdsaleContract() {
-    require(crowdsaleContracts[msg.sender]);
-    _;
-  }
-
-  function addCrowdsaleContract(address _crowdsaleContract) onlyOwner {
-    crowdsaleContracts[_crowdsaleContract] = true;
-  }
-
-  function deleteCrowdsaleContract(address _crowdsaleContract) onlyOwner {
-    require(crowdsaleContracts[_crowdsaleContract]);
-    delete crowdsaleContracts[_crowdsaleContract];
-  }
-  function mint(address _to, uint256 _amount) onlyCrowdsaleContract canMint returns (bool) {
+  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
 
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
@@ -227,7 +214,7 @@ contract MintableToken is StandardToken, Ownable {
     return true;
   }
 
-  function finishMinting() onlyCrowdsaleContract returns (bool) {
+  function finishMinting() onlyOwner returns (bool) {
     mintingFinished = true;
     MintFinished();
     return true;
@@ -274,11 +261,9 @@ contract PrivatePlacement {
 
 
   function PrivatePlacement(
-    address tokenAddress,
     address _multisig,
     uint256 _rate)
   {
-    tokenContract = Nafen(tokenAddress);
     multisig = _multisig;
     rateCent = _rate;
   }
