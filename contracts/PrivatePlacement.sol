@@ -280,12 +280,11 @@ contract PrivatePlacement {
   {
     tokenContract = Nafen(tokenAddress);
     multisig = _multisig;
-    rateEur = _rate;
+    rateCent = _rate;
   }
 
   function getCentBalance() constant returns (uint256) {
-    uint256 eurBalance = this.balance.div(OneEURWei());
-    return eurBalance;
+    return this.balance.div(price.EUR(0));
   }
 
 
@@ -300,6 +299,7 @@ contract PrivatePlacement {
     || (now > startB && now < startB + periodB)
     || (now > startC && now < startC + periodC)
     );
+    _;
   }
 
 
