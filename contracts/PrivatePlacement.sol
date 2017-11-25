@@ -257,7 +257,7 @@ contract PrivatePlacement {
 
   using SafeMath for uint;
 
-  FiatContract public price;
+  FiatContract public price = FiatContract(0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909); // mainnet 0x8055d0504666e2B6942BeB8D6014c964658Ca591 testnet 0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909
 
   Nafen tokenContract;
 
@@ -335,7 +335,7 @@ contract PrivatePlacement {
   }
 
   function () payable {
-
+    mintTokens();
   }
 
 }
