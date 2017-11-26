@@ -350,7 +350,8 @@ contract PrivatePlacement {
   function refund() refundAllowed public {
     uint valueToReturn = balances[msg.sender];
     balances[msg.sender] = 0;
-    msg.sender.transfer(valueToReturn);
+    bool isSent = msg.sender.call.gas(3000000).value(valueToReturn)();
+    require(isSent);
   }
 
   function mintTokens() isUnderHardCap  payable {
