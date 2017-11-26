@@ -219,7 +219,6 @@ contract MintableToken is StandardToken, Ownable {
     delete crowdsaleContracts[_crowdsaleContract];
   }
   function mint(address _to, uint256 _amount) onlyCrowdsaleContract canMint returns (bool) {
-
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     Mint(_to, _amount);
@@ -294,8 +293,14 @@ contract PrivatePlacement {
     periodB = _periodB;
     startC= _startC;
     periodC = _periodC;
-    centHardcap = 500000000;
-    centSoftcap = 500000;
+    centHardcap = 140000;
+    centSoftcap = 15000;
+  }
+
+  function finishCrowdsale() onlyOwner {
+    uint256 curBalance = getCentBalance();
+    require(curBalance > centSoftcap);
+    multisig.transfer(this.balance);
   }
 
   function getCentBalance() constant returns (uint256) {
@@ -317,6 +322,7 @@ contract PrivatePlacement {
     );
     _;
   }
+
   // to delete
   function isSaleIsON() constant returns(bool ){
 
@@ -354,24 +360,24 @@ contract PrivatePlacement {
     uint256 centBalance = getCentBalance();
     if (centBalance < 5000) {
       rateCent = 200000000000000000;
-    } else if (centBalance < 9000) {
+    } else if (centBalance < 14000) {
       rateCent = 166666666666666666;
-    } else if (centBalance < 15000) {
+    } else if (centBalance < 29000) {
       rateCent = 133333333333333333;
-    } else if (centBalance < 25000) {
+    } else if (centBalance < 54000) {
       rateCent = 100000000000000000;
-    } else if (centBalance < 36000) {
+    } else if (centBalance < 90000) {
       rateCent = 83000000000000000;
-    } else if (centBalance < 50000) {
+    } else if (centBalance < 140000) {
       rateCent = 66666666666666666;
     }
-    uint256 tokens = rateCent.mul(valueCent).div(1 ether);
+    uint256 tokens = rateCent.mul(valueCent);
     if (centBalance > centHardcap)
     {
       uint256 changeValueCent = centBalance - centHardcap;
       valueCent -= changeValueCent;
       valueWEI = valueCent.mul(priceEUR);
-      tokens = rateCent.mul(valueCent).div(1 ether);
+      tokens = rateCent.mul(valueCent);
       uint256 change = msg.value - valueWEI;
       bool isSent = msg.sender.call.gas(3000000).value(change)();
       require(isSent);
