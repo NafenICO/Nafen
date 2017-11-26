@@ -276,11 +276,22 @@ contract PrivatePlacement {
   function PrivatePlacement(
     address tokenAddress,
     address _multisig,
-    uint256 _rate)
+    uint _startA,
+    uint _periodA,
+    uint _startB,
+    uint _periodB,
+    uint _startC,
+    uint _periodC)
   {
     tokenContract = Nafen(tokenAddress);
     multisig = _multisig;
-    rateCent = _rate;
+    startA = _startA;
+    periodA = _periodA;
+    startB = _startB;
+    periodB = _periodB;
+    startC= _startC;
+    periodC = _periodC;
+    
   }
 
   function getCentBalance() constant returns (uint256) {
@@ -338,5 +349,3 @@ contract PrivatePlacement {
   }
 
 }
-
-
