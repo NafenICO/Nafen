@@ -254,7 +254,7 @@ contract FiatContract {
 }
 
 contract PrivatePlacement {
-
+  //"0x38c18bae1ecbb93834379e951556b875bb646254","0x3dd90d5eb224c4637f885b7476eccba6b3aa45c5"
   using SafeMath for uint;
 
   FiatContract public price = FiatContract(0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909); // mainnet 0x8055d0504666e2B6942BeB8D6014c964658Ca591 testnet 0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909
@@ -291,7 +291,7 @@ contract PrivatePlacement {
     periodB = _periodB;
     startC= _startC;
     periodC = _periodC;
-    
+    centHardcap = 500000000;
   }
 
   function getCentBalance() constant returns (uint256) {
@@ -312,7 +312,21 @@ contract PrivatePlacement {
     );
     _;
   }
-
+  function isSaleIsON() constant returns(bool ){
+     
+     if ((now > startA && now < startA + periodA)
+    || (now > startB && now < startB + periodB)
+    || (now > startC && now < startC + periodC))
+    {
+        return true;
+    } 
+    else return false;
+      
+  }
+  function curPrice () constant returns (uint256) {
+      
+      return price.EUR(0);
+  }
 
   function mintTokens() isUnderHardCap payable {
     uint256 valueWEI = msg.value;
