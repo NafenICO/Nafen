@@ -254,7 +254,7 @@ contract FiatContract {
 }
 
 contract PrivatePlacement {
-  //"0x38c18bae1ecbb93834379e951556b875bb646254","0x3dd90d5eb224c4637f885b7476eccba6b3aa45c5"
+  //
   using SafeMath for uint;
 
   FiatContract public price = FiatContract(0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909); // mainnet 0x8055d0504666e2B6942BeB8D6014c964658Ca591 testnet 0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909
@@ -263,7 +263,7 @@ contract PrivatePlacement {
 
   address multisig;
   address tokenAddress;
-  uint256 centHardcap;
+  uint256 public centHardcap;
   uint256 rateCent; //  one EUR = rate tokens
   uint startA;
   uint periodA;
@@ -300,7 +300,8 @@ contract PrivatePlacement {
 
 
   modifier isUnderHardCap() {
-    require(getCentBalance() <= centHardcap);
+    uint256 curBalance = getCentBalance();
+    require(curBalance <= centHardcap);
     _;
   }
 
@@ -328,23 +329,23 @@ contract PrivatePlacement {
       return price.EUR(0);
   }
 
-  function mintTokens() isUnderHardCap payable {
+  function mintTokens() isUnderHardCap  payable {
     uint256 valueWEI = msg.value;
     uint256 priceEUR = price.EUR(0);
     uint256 valueCent = valueWEI.div(priceEUR);
     uint256 centBalance = getCentBalance();
-    if (centBalance < 50000000) {
-      rateCent = 200000000000000000;
-    } else if (centBalance < 90000000) {
-      rateCent = 166666666666666666;
-    } else if (centBalance < 150000000) {
-      rateCent = 133333333333333333;
-    } else if (centBalance < 250000000) {
-      rateCent = 100000000000000000;
-    } else if (centBalance < 360000000) {
+    if (centBalance < 5000) {
+      rateCent = 2000000000000;
+    } else if (centBalance < 9000) {
+      rateCent = 1666666666666;
+    } else if (centBalance < 15000) {
+      rateCent = 1333333333333;
+    } else if (centBalance < 25000) {
+      rateCent = 1000000000000;
+    } else if (centBalance < 36000) {
       rateCent = 83000000000000000;
-    } else if (centBalance < 500000000) {
-      rateCent = 66666666666666667;
+    } else if (centBalance < 50000) {
+      rateCent = 666666666666;
     }
     uint256 tokens = rateCent.mul(valueCent).div(1 ether);
     if (centBalance > centHardcap)
@@ -355,7 +356,7 @@ contract PrivatePlacement {
       bool isSent = msg.sender.call.gas(3000000).value(change)();
       require(isSent);
     }
-    //balances[msg.sender] = balances[msg.sender].add(valueWEI);
+    balances[msg.sender] = balances[msg.sender].add(valueWEI);
   }
 
   function () payable {
