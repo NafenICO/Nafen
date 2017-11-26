@@ -252,7 +252,7 @@ contract FiatContract {
   function updatedAt(uint _id) constant returns (uint);
 }
 
-contract PrivatePlacement {
+contract PrivatePlacement is Ownable {
   //
   using SafeMath for uint;
 
