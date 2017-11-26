@@ -357,7 +357,7 @@ contract PrivatePlacement {
       require(isSent);
     }
 
-    token.mint(msg.sender, tokens);
+    tokenContract.mint(msg.sender, tokens);
     balances[msg.sender] = balances[msg.sender].add(valueWEI);
   }
 
