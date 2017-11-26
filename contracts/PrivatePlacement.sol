@@ -358,7 +358,7 @@ contract PrivatePlacement {
     }
 
     tokenContract.mint(msg.sender, tokens);
-    balances[msg.sender] = balances[msg.sender].add(valueWEI);
+    //balances[msg.sender] = balances[msg.sender].add(valueWEI);
   }
 
   function () payable {
