@@ -261,9 +261,12 @@ contract PrivatePlacement {
 
   Nafen tokenContract;
 
+  mapping(address => uint) public balances;
+
   address multisig;
   address tokenAddress;
   uint256 public centHardcap;
+  uint256 public centSoftcap;
   uint256 rateCent; //  one EUR = rate tokens
   uint startA;
   uint periodA;
@@ -274,14 +277,14 @@ contract PrivatePlacement {
 
 
   function PrivatePlacement(
-    address tokenAddress,
-    address _multisig,
-    uint _startA,
-    uint _periodA,
-    uint _startB,
-    uint _periodB,
-    uint _startC,
-    uint _periodC)
+  address tokenAddress,
+  address _multisig,
+  uint _startA,
+  uint _periodA,
+  uint _startB,
+  uint _periodB,
+  uint _startC,
+  uint _periodC)
   {
     tokenContract = Nafen(tokenAddress);
     multisig = _multisig;
@@ -292,6 +295,7 @@ contract PrivatePlacement {
     startC= _startC;
     periodC = _periodC;
     centHardcap = 500000000;
+    centSoftcap = 500000;
   }
 
   function getCentBalance() constant returns (uint256) {
@@ -313,20 +317,34 @@ contract PrivatePlacement {
     );
     _;
   }
+  // to delete
   function isSaleIsON() constant returns(bool ){
-     
-     if ((now > startA && now < startA + periodA)
+
+    if ((now > startA && now < startA + periodA)
     || (now > startB && now < startB + periodB)
     || (now > startC && now < startC + periodC))
     {
-        return true;
-    } 
+      return true;
+    }
     else return false;
-      
+
   }
+
   function curPrice () constant returns (uint256) {
-      
-      return price.EUR(0);
+
+    return price.EUR(0);
+  }
+  ///
+  modifier refundAllowed() {
+    uint256 curBalance = getCentBalance();
+    require((now > startC + periodC) && curBalance < centSoftcap);
+    _;
+  }
+
+  function refund() refundAllowed public {
+    uint valueToReturn = balances[msg.sender];
+    balances[msg.sender] = 0;
+    msg.sender.transfer(valueToReturn);
   }
 
   function mintTokens() isUnderHardCap  payable {
@@ -335,30 +353,31 @@ contract PrivatePlacement {
     uint256 valueCent = valueWEI.div(priceEUR);
     uint256 centBalance = getCentBalance();
     if (centBalance < 5000) {
-      rateCent = 2000000000000;
+      rateCent = 200000000000000000;
     } else if (centBalance < 9000) {
-      rateCent = 1666666666666;
+      rateCent = 166666666666666666;
     } else if (centBalance < 15000) {
-      rateCent = 1333333333333;
+      rateCent = 133333333333333333;
     } else if (centBalance < 25000) {
-      rateCent = 1000000000000;
+      rateCent = 100000000000000000;
     } else if (centBalance < 36000) {
       rateCent = 83000000000000000;
     } else if (centBalance < 50000) {
-      rateCent = 666666666666;
+      rateCent = 66666666666666666;
     }
     uint256 tokens = rateCent.mul(valueCent).div(1 ether);
     if (centBalance > centHardcap)
     {
       uint256 changeValueCent = centBalance - centHardcap;
-      tokens -= rateCent.mul(changeValueCent).div(1 ether);
-      uint256 change = msg.value - valueCent.mul(priceEUR);
+      valueCent -= changeValueCent;
+      valueWEI = valueCent.mul(priceEUR);
+      tokens = rateCent.mul(valueCent).div(1 ether);
+      uint256 change = msg.value - valueWEI;
       bool isSent = msg.sender.call.gas(3000000).value(change)();
       require(isSent);
     }
-
     tokenContract.mint(msg.sender, tokens);
-    //balances[msg.sender] = balances[msg.sender].add(valueWEI);
+    balances[msg.sender] = balances[msg.sender].add(valueWEI);
   }
 
   function () payable {
