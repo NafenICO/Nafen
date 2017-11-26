@@ -301,6 +301,7 @@ contract PrivatePlacement is Ownable {
     uint256 curBalance = getCentBalance();
     require(curBalance > centSoftcap);
     multisig.transfer(this.balance);
+    tokenContract.finishMinting();
   }
 
   function getCentBalance() constant returns (uint256) {
@@ -354,7 +355,7 @@ contract PrivatePlacement is Ownable {
     require(isSent);
   }
 
-  function mintTokens() isUnderHardCap  payable {
+  function mintTokens() isUnderHardCap saleIsOn payable {
     uint256 valueWEI = msg.value;
     uint256 priceEUR = price.EUR(0);
     uint256 valueCent = valueWEI.div(priceEUR);
