@@ -274,6 +274,8 @@ contract PrivatePlacement is Ownable {
   uint startC;
   uint periodC;
 
+  bool isUnderHardCap = true;
+
   function PrivatePlacement(
   address tokenAddress,
   address _multisig,
@@ -307,12 +309,14 @@ contract PrivatePlacement is Ownable {
     return this.balance.div(price.EUR(0));
   }
 
-
+  /**
   modifier isUnderHardCap() {
     uint256 curBalance = getCentBalance()- msg.value.div(price.EUR(0)) ;
     require(curBalance <= centHardcap);
     _;
   }
+  **/
+
 
   modifier saleIsOn() {
     require(
@@ -354,7 +358,8 @@ contract PrivatePlacement is Ownable {
     require(isSent);
   }
 
-  function mintTokens() isUnderHardCap saleIsOn payable {
+  function mintTokens() saleIsOn payable {
+    require(isUnderHardCap);
     uint256 valueWEI = msg.value;
     uint256 priceEUR = price.EUR(0);
     uint256 valueCent = valueWEI.div(priceEUR);
@@ -375,6 +380,7 @@ contract PrivatePlacement is Ownable {
     uint256 tokens = rateCent.mul(valueCent);
     if (centBalance > centHardcap)
     {
+      isUnderHardCap = false;
       uint256 changeValueCent = centBalance - centHardcap;
       valueCent -= changeValueCent;
       valueWEI = valueCent.mul(priceEUR);
