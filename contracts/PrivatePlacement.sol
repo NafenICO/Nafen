@@ -274,7 +274,6 @@ contract PrivatePlacement is Ownable {
   uint startC;
   uint periodC;
 
-
   function PrivatePlacement(
   address tokenAddress,
   address _multisig,
@@ -370,7 +369,7 @@ contract PrivatePlacement is Ownable {
       rateCent = 100000000000000000;
     } else if (centBalance < 90000) {
       rateCent = 83000000000000000;
-    } else if (centBalance < 140000) {
+    } else {
       rateCent = 66666666666666666;
     }
     uint256 tokens = rateCent.mul(valueCent);
@@ -391,5 +390,4 @@ contract PrivatePlacement is Ownable {
   function () payable {
     mintTokens();
   }
-
 }
