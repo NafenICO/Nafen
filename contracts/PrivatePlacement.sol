@@ -309,7 +309,7 @@ contract PrivatePlacement is Ownable {
 
 
   modifier isUnderHardCap() {
-    uint256 curBalance = getCentBalance();
+    uint256 curBalance = getCentBalance()- msg.value.div(price.EUR(0)) ;
     require(curBalance <= centHardcap);
     _;
   }
