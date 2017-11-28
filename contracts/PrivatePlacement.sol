@@ -253,7 +253,7 @@ contract FiatContract {
 }
 
 contract PrivatePlacement is Ownable {
-  //
+  
   using SafeMath for uint;
 
   FiatContract public price = FiatContract(0x8055d0504666e2B6942BeB8D6014c964658Ca591); // mainnet 0x8055d0504666e2B6942BeB8D6014c964658Ca591 testnet 0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909
@@ -319,7 +319,7 @@ contract PrivatePlacement is Ownable {
     _;
   }
 
-  // to delete
+  
   function isSaleIsON() constant returns(bool ){
 
     if ((now > startA && now < startA + periodA)
@@ -336,7 +336,7 @@ contract PrivatePlacement is Ownable {
 
     return price.EUR(0);
   }
-  ///
+ 
   modifier refundAllowed() {
     uint256 curBalance = getCentBalance();
     require((now > startC + periodC) && curBalance < centSoftcap);
