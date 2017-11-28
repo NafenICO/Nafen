@@ -256,7 +256,7 @@ contract PrivatePlacement is Ownable {
   //
   using SafeMath for uint;
 
-  FiatContract public price = FiatContract(0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909); // mainnet 0x8055d0504666e2B6942BeB8D6014c964658Ca591 testnet 0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909
+  FiatContract public price = FiatContract(0x8055d0504666e2B6942BeB8D6014c964658Ca591); // mainnet 0x8055d0504666e2B6942BeB8D6014c964658Ca591 testnet 0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909
 
   Nafen tokenContract;
 
@@ -294,8 +294,8 @@ contract PrivatePlacement is Ownable {
     periodB = _periodB;
     startC= _startC;
     periodC = _periodC;
-    centHardcap = 140000;
-    centSoftcap = 15000;
+    centHardcap = 1400000000;
+    centSoftcap = 150000000;
   }
 
   function finishCrowdsale() onlyOwner {
@@ -309,15 +309,7 @@ contract PrivatePlacement is Ownable {
     return this.balance.div(price.EUR(0));
   }
 
-  /**
-  modifier isUnderHardCap() {
-    uint256 curBalance = getCentBalance()- msg.value.div(price.EUR(0)) ;
-    require(curBalance <= centHardcap);
-    _;
-  }
-  **/
-
-
+ 
   modifier saleIsOn() {
     require(
     (now > startA && now < startA + periodA)
@@ -364,15 +356,15 @@ contract PrivatePlacement is Ownable {
     uint256 priceEUR = price.EUR(0);
     uint256 valueCent = valueWEI.div(priceEUR);
     uint256 centBalance = getCentBalance();
-    if (centBalance < 5000) {
+    if (centBalance < 50000000) {
       rateCent = 200000000000000000;
-    } else if (centBalance < 14000) {
+    } else if (centBalance < 140000000) {
       rateCent = 166666666666666666;
-    } else if (centBalance < 29000) {
+    } else if (centBalance < 290000000) {
       rateCent = 133333333333333333;
-    } else if (centBalance < 54000) {
+    } else if (centBalance < 540000000) {
       rateCent = 100000000000000000;
-    } else if (centBalance < 90000) {
+    } else if (centBalance < 900000000) {
       rateCent = 83000000000000000;
     } else {
       rateCent = 66666666666666666;
