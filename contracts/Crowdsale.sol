@@ -252,7 +252,7 @@ contract FiatContract {
   function updatedAt(uint _id) constant returns (uint);
 }
 
-contract PrivatePlacement is Ownable {
+contract Crowdsale is Ownable {
   
   using SafeMath for uint;
 
@@ -276,7 +276,7 @@ contract PrivatePlacement is Ownable {
 
   bool isUnderHardCap = true;
 
-  function PrivatePlacement(
+  function Crowdsale(
   address tokenAddress,
   address _multisig,
   uint _startA,
