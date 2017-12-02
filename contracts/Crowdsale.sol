@@ -289,11 +289,11 @@ contract Crowdsale is Ownable {
     tokenContract = Nafen(tokenAddress);
     multisig = _multisig;
     startA = _startA;
-    periodA = _periodA;
+    periodA = _periodA * day;
     startB = _startB;
-    periodB = _periodB;
+    periodB = _periodB * day;
     startC= _startC;
-    periodC = _periodC;
+    periodC = _periodC * day;
     centHardcap = 1400000000;
     centSoftcap = 150000000;
   }
