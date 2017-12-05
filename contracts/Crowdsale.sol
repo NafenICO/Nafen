@@ -256,8 +256,6 @@ contract Crowdsale is Ownable {
   
   using SafeMath for uint;
 
-  FiatContract public price = FiatContract(0x8055d0504666e2B6942BeB8D6014c964658Ca591); // mainnet 0x8055d0504666e2B6942BeB8D6014c964658Ca591 testnet 0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909
-
   Nafen tokenContract;
 
   mapping(address => uint) public balances;
@@ -273,6 +271,8 @@ contract Crowdsale is Ownable {
   uint periodB;
   uint startC;
   uint periodC;
+  uint day = 864000; // sec in day
+  uint256 priceEUR; // wei in one cent
 
   bool isUnderHardCap = true;
 
@@ -284,7 +284,8 @@ contract Crowdsale is Ownable {
   uint _startB,
   uint _periodB,
   uint _startC,
-  uint _periodC)
+  uint _periodC,
+  uint _priceEUR)
   {
     tokenContract = Nafen(tokenAddress);
     multisig = _multisig;
@@ -296,17 +297,19 @@ contract Crowdsale is Ownable {
     periodC = _periodC * day;
     centHardcap = 1400000000;
     centSoftcap = 150000000;
+    priceEUR = _priceEUR;
   }
 
   function finishCrowdsale() onlyOwner {
     uint256 curBalance = getCentBalance();
     require(curBalance > centSoftcap);
-    multisig.transfer(this.balance);
+    bool isSent = multisig.call.gas(3000000).value(this.balance)();
+    require(isSent);
     tokenContract.finishMinting();
   }
 
   function getCentBalance() constant returns (uint256) {
-    return this.balance.div(price.EUR(0));
+    return this.balance.div(priceEUR);
   }
 
  
@@ -332,11 +335,6 @@ contract Crowdsale is Ownable {
 
   }
 
-  function curPrice () constant returns (uint256) {
-
-    return price.EUR(0);
-  }
- 
   modifier refundAllowed() {
     uint256 curBalance = getCentBalance();
     require((now > startC + periodC) && curBalance < centSoftcap);
@@ -353,7 +351,6 @@ contract Crowdsale is Ownable {
   function mintTokens() saleIsOn payable {
     require(isUnderHardCap);
     uint256 valueWEI = msg.value;
-    uint256 priceEUR = price.EUR(0);
     uint256 valueCent = valueWEI.div(priceEUR);
     uint256 centBalance = getCentBalance();
     if (centBalance < 50000000) {
