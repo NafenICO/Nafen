@@ -345,7 +345,7 @@ contract Crowdsale is Ownable {
     uint256 rateCent = getRate();
     uint256 tokensAmount = rateCent.mul(valueCent);
     centBalance += valueCent;
-    token.mint(_to, tokensAmount);
+    tokenContract.mint(_to, tokensAmount);
   }
 
 
@@ -390,6 +390,7 @@ contract Crowdsale is Ownable {
   }
 
   function getRate() constant returns(uint256){
+    uint256 _rateCent;
     if (centBalance < 50000000) {
       _rateCent = 200000000000000000;
     } else if (centBalance < 140000000) {
