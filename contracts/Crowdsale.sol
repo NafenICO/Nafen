@@ -192,7 +192,7 @@ contract Ownable {
  * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
 
-contract MintableToken is StandardToken, Ownable {
+contract MintableBurnableToken is StandardToken, Ownable {
 
   event Mint(address indexed to, uint256 amount);
   event MintFinished();
@@ -232,9 +232,26 @@ contract MintableToken is StandardToken, Ownable {
     return true;
   }
 
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    require(_value <= balances[msg.sender]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    Burn(burner, _value);
+  }
+
 }
 
-contract Nafen is MintableToken {
+contract Nafen is MintableBurnableToken {
 
   string public constant name = "Nafen";
 
@@ -252,31 +269,34 @@ contract FiatContract {
   function updatedAt(uint _id) constant returns (uint);
 }
 
-contract Crowdsale is Ownable {
-  //
-  using SafeMath for uint;
 
-  FiatContract public price = FiatContract(0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909); // mainnet 0x8055d0504666e2B6942BeB8D6014c964658Ca591 testnet 0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909
+contract Crowdsale is Ownable {
+  
+  using SafeMath for uint;
 
   Nafen tokenContract;
 
   mapping(address => uint) public balances;
+  mapping(address => bool) public whiteList;
 
   address multisig;
   address tokenAddress;
+  address CrowdsaleManager;
   uint256 public centHardcap;
   uint256 public centSoftcap;
-  uint256 rateCent; //  one EUR = rate tokens
-  uint startA;
-  uint periodA;
-  uint startB;
-  uint periodB;
-  uint startC;
-  uint periodC;
+  uint256 startA;
+  uint256 periodA;
+  uint256 startB;
+  uint256 periodB;
+  uint256 startC;
+  uint256 periodC;
+  uint256 day = 864000; // sec in day
+  uint256 priceEUR; // wei in one cent
+  uint256 centBalance;
 
   bool isUnderHardCap = true;
 
-  function PrivatePlacement(
+  function Crowdsale(
   address tokenAddress,
   address _multisig,
   uint _startA,
@@ -284,40 +304,56 @@ contract Crowdsale is Ownable {
   uint _startB,
   uint _periodB,
   uint _startC,
-  uint _periodC)
+  uint _periodC,
+  uint _priceEUR)
   {
     tokenContract = Nafen(tokenAddress);
     multisig = _multisig;
     startA = _startA;
-    periodA = _periodA;
+    periodA = _periodA * day;
     startB = _startB;
-    periodB = _periodB;
+    periodB = _periodB * day;
     startC= _startC;
-    periodC = _periodC;
-    centHardcap = 140000;
-    centSoftcap = 15000;
+    periodC = _periodC * day;
+    centHardcap = 1400000000;
+    centSoftcap = 150000000;
+    priceEUR = _priceEUR;
   }
 
   function finishCrowdsale() onlyOwner {
     uint256 curBalance = getCentBalance();
     require(curBalance > centSoftcap);
-    multisig.transfer(this.balance);
+    bool isSent = multisig.call.gas(3000000).value(this.balance)();
+    require(isSent);
     tokenContract.finishMinting();
   }
 
-  function getCentBalance() constant returns (uint256) {
-    return this.balance.div(price.EUR(0));
+  function addToWhiteList(address _investor) onlyCrowdsaleManagerOrOwner {
+    whiteList[_investor] = true;
   }
 
-  /**
-  modifier isUnderHardCap() {
-    uint256 curBalance = getCentBalance()- msg.value.div(price.EUR(0)) ;
-    require(curBalance <= centHardcap);
+  function setCrowdsaleManager(address _manager) onlyOwner {
+    CrowdsaleManager = _manager;
+  }
+
+  function getCentBalance() constant returns (uint256) {
+    return this.balance.div(priceEUR);
+  }
+
+  function handleSale(address _to, uint _valueEUR) onlyCrowdsaleManagerOrOwner  {
+    uint256 valueCent = _valueEUR * 100;
+    uint256 rateCent = getRate();
+    uint256 tokensAmount = rateCent.mul(valueCent);
+    centBalance += valueCent;
+    tokenContract.mint(_to, tokensAmount);
+  }
+
+
+  modifier onlyCrowdsaleManagerOrOwner() {
+    require(CrowdsaleManager == msg.sender || owner == msg.sender);
     _;
   }
-  **/
-
-
+ 
   modifier saleIsOn() {
     require(
     (now > startA && now < startA + periodA)
@@ -327,7 +363,7 @@ contract Crowdsale is Ownable {
     _;
   }
 
-  // to delete
+  
   function isSaleIsON() constant returns(bool ){
 
     if ((now > startA && now < startA + periodA)
@@ -340,11 +376,6 @@ contract Crowdsale is Ownable {
 
   }
 
-  function curPrice () constant returns (uint256) {
-
-    return price.EUR(0);
-  }
-  ///
   modifier refundAllowed() {
     uint256 curBalance = getCentBalance();
     require((now > startC + periodC) && curBalance < centSoftcap);
@@ -358,30 +389,34 @@ contract Crowdsale is Ownable {
     require(isSent);
   }
 
-  function mintTokens() saleIsOn payable {
-    require(isUnderHardCap);
-    uint256 valueWEI = msg.value;
-    uint256 priceEUR = price.EUR(0);
-    uint256 valueCent = valueWEI.div(priceEUR);
-    uint256 centBalance = getCentBalance();
-    if (centBalance < 5000) {
-      rateCent = 200000000000000000;
-    } else if (centBalance < 14000) {
-      rateCent = 166666666666666666;
-    } else if (centBalance < 29000) {
-      rateCent = 133333333333333333;
-    } else if (centBalance < 54000) {
-      rateCent = 100000000000000000;
-    } else if (centBalance < 90000) {
-      rateCent = 83000000000000000;
+  function getRate() constant returns(uint256){
+    uint256 _rateCent;
+    if (centBalance < 50000000) {
+      _rateCent = 200000000000000000;
+    } else if (centBalance < 140000000) {
+      _rateCent = 166666666666666666;
+    } else if (centBalance < 290000000) {
+      _rateCent = 133333333333333333;
+    } else if (centBalance < 540000000) {
+      _rateCent = 100000000000000000;
+    } else if (centBalance < 900000000) {
+      _rateCent = 83000000000000000;
     } else {
-      rateCent = 66666666666666666;
+      _rateCent = 66666666666666666;
     }
+    return _rateCent;
+  }
+
+  function mintTokens() saleIsOn payable {
+    require(isUnderHardCap && whiteList[msg.sender]);
+    uint256 valueWEI = msg.value;
+    uint256 valueCent = valueWEI.div(priceEUR);
+    uint256 rateCent = getRate();
     uint256 tokens = rateCent.mul(valueCent);
-    if (centBalance > centHardcap)
+    if (centBalance + valueCent > centHardcap)
     {
       isUnderHardCap = false;
-      uint256 changeValueCent = centBalance - centHardcap;
+      uint256 changeValueCent = centBalance + valueCent - centHardcap;
       valueCent -= changeValueCent;
       valueWEI = valueCent.mul(priceEUR);
       tokens = rateCent.mul(valueCent);
