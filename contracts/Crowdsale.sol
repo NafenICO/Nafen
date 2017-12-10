@@ -261,16 +261,32 @@ contract Nafen is MintableBurnableToken {
 
 }
 
-contract FiatContract {
-  function ETH(uint _id) constant returns (uint256);
-  function USD(uint _id) constant returns (uint256);
-  function EUR(uint _id) constant returns (uint256);
-  function GBP(uint _id) constant returns (uint256);
-  function updatedAt(uint _id) constant returns (uint);
+
+contract ReentrancyGuard {
+
+  /**
+   * @dev We use a single lock for the whole contract.
+   */
+  bool private rentrancy_lock = false;
+
+  /**
+   * @dev Prevents a contract from calling itself, directly or indirectly.
+   * @notice If you mark a function `nonReentrant`, you should also
+   * mark it `external`. Calling one nonReentrant function from
+   * another is not supported. Instead, you can implement a
+   * `private` function doing the actual work, and a `external`
+   * wrapper marked as `nonReentrant`.
+   */
+  modifier nonReentrant() {
+    require(!rentrancy_lock);
+    rentrancy_lock = true;
+    _;
+    rentrancy_lock = false;
+  }
 }
 
 
-contract Crowdsale is Ownable {
+contract Crowdsale is Ownable, ReentrancyGuard {
   
   using SafeMath for uint;
 
@@ -382,7 +398,7 @@ contract Crowdsale is Ownable {
     _;
   }
 
-  function refund() refundAllowed public {
+  function refund() refundAllowed nonReentrant public {
     uint valueToReturn = balances[msg.sender];
     balances[msg.sender] = 0;
     bool isSent = msg.sender.call.gas(3000000).value(valueToReturn)();
@@ -407,7 +423,7 @@ contract Crowdsale is Ownable {
     return _rateCent;
   }
 
-  function mintTokens() saleIsOn payable {
+  function mintTokens() nonReentrant saleIsOn payable {
     require(isUnderHardCap && whiteList[msg.sender]);
     uint256 valueWEI = msg.value;
     uint256 valueCent = valueWEI.div(priceEUR);
