@@ -192,7 +192,7 @@ contract Ownable {
  * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
 
-contract MintableToken is StandardToken, Ownable {
+contract MintableBurnableToken is StandardToken, Ownable {
 
   event Mint(address indexed to, uint256 amount);
   event MintFinished();
@@ -232,9 +232,26 @@ contract MintableToken is StandardToken, Ownable {
     return true;
   }
 
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    require(_value <= balances[msg.sender]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    Burn(burner, _value);
+  }
+
 }
 
-contract Nafen is MintableToken {
+contract Nafen is MintableBurnableToken {
 
   string public constant name = "Nafen";
 
@@ -252,6 +269,7 @@ contract FiatContract {
   function updatedAt(uint _id) constant returns (uint);
 }
 
+
 contract Crowdsale is Ownable {
   
   using SafeMath for uint;
@@ -259,20 +277,22 @@ contract Crowdsale is Ownable {
   Nafen tokenContract;
 
   mapping(address => uint) public balances;
+  mapping(address => bool) public whiteList;
 
   address multisig;
   address tokenAddress;
+  address CrowdsaleManager;
   uint256 public centHardcap;
   uint256 public centSoftcap;
-  uint256 rateCent; //  one EUR = rate tokens
-  uint startA;
-  uint periodA;
-  uint startB;
-  uint periodB;
-  uint startC;
-  uint periodC;
-  uint day = 864000; // sec in day
+  uint256 startA;
+  uint256 periodA;
+  uint256 startB;
+  uint256 periodB;
+  uint256 startC;
+  uint256 periodC;
+  uint256 day = 864000; // sec in day
   uint256 priceEUR; // wei in one cent
+  uint256 centBalance;
 
   bool isUnderHardCap = true;
 
@@ -308,10 +328,31 @@ contract Crowdsale is Ownable {
     tokenContract.finishMinting();
   }
 
+  function addToWhiteList(address _investor) onlyCrowdsaleManagerOrOwner {
+    whiteList[_investor] = true;
+  }
+
+  function setCrowdsaleManager(address _manager) onlyOwner {
+    CrowdsaleManager = _manager;
+  }
+
   function getCentBalance() constant returns (uint256) {
     return this.balance.div(priceEUR);
   }
 
+  function handleSale(address _to, uint _valueEUR) onlyCrowdsaleManagerOrOwner  {
+    uint256 valueCent = _valueEUR * 100;
+    uint256 rateCent = getRate();
+    uint256 tokensAmount = rateCent.mul(valueCent);
+    centBalance += valueCent;
+    token.mint(_to, tokensAmount);
+  }
+
+
+  modifier onlyCrowdsaleManagerOrOwner() {
+    require(CrowdsaleManager == msg.sender || owner == msg.sender);
+    _;
+  }
  
   modifier saleIsOn() {
     require(
@@ -348,29 +389,33 @@ contract Crowdsale is Ownable {
     require(isSent);
   }
 
+  function getRate() constant returns(uint256){
+    if (centBalance < 50000000) {
+      _rateCent = 200000000000000000;
+    } else if (centBalance < 140000000) {
+      _rateCent = 166666666666666666;
+    } else if (centBalance < 290000000) {
+      _rateCent = 133333333333333333;
+    } else if (centBalance < 540000000) {
+      _rateCent = 100000000000000000;
+    } else if (centBalance < 900000000) {
+      _rateCent = 83000000000000000;
+    } else {
+      _rateCent = 66666666666666666;
+    }
+    return _rateCent;
+  }
+
   function mintTokens() saleIsOn payable {
-    require(isUnderHardCap);
+    require(isUnderHardCap && whiteList[msg.sender]);
     uint256 valueWEI = msg.value;
     uint256 valueCent = valueWEI.div(priceEUR);
-    uint256 centBalance = getCentBalance();
-    if (centBalance < 50000000) {
-      rateCent = 200000000000000000;
-    } else if (centBalance < 140000000) {
-      rateCent = 166666666666666666;
-    } else if (centBalance < 290000000) {
-      rateCent = 133333333333333333;
-    } else if (centBalance < 540000000) {
-      rateCent = 100000000000000000;
-    } else if (centBalance < 900000000) {
-      rateCent = 83000000000000000;
-    } else {
-      rateCent = 66666666666666666;
-    }
+    uint256 rateCent = getRate();
     uint256 tokens = rateCent.mul(valueCent);
-    if (centBalance > centHardcap)
+    if (centBalance + valueCent > centHardcap)
     {
       isUnderHardCap = false;
-      uint256 changeValueCent = centBalance - centHardcap;
+      uint256 changeValueCent = centBalance + valueCent - centHardcap;
       valueCent -= changeValueCent;
       valueWEI = valueCent.mul(priceEUR);
       tokens = rateCent.mul(valueCent);
