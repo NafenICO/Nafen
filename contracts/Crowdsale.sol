@@ -280,7 +280,7 @@ contract ReentrancyGuard {
 
 
 contract Crowdsale is Ownable, ReentrancyGuard {
-  
+
   using SafeMath for uint;
 
   Nafen public tokenContract;
@@ -320,6 +320,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   uint _periodC,
   uint _priceEUR)
   {
+    require(priceEUR!=0);
     tokenContract = new Nafen();
     multisig = _multisig;
     phases.push(Phase(_startA, _periodA * day));
@@ -380,13 +381,13 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     require(CrowdsaleManager == msg.sender || owner == msg.sender);
     _;
   }
- 
+
   modifier saleIsOn() {
     require(isSaleIsON());
     _;
   }
 
-  
+
   function isSaleIsON() view returns(bool ) {
 
     if ((now > phases[0].start && now < phases[0].start + phases[0].period)
