@@ -210,16 +210,7 @@ contract MintableBurnableToken is StandardToken, Ownable {
     _;
   }
 
-  modifier onlyCrowdsaleContract() {
-    require(msg.sender == crowdsaleContract);
-    _;
-  }
-
-  function setCrowdsaleContract(address _crowdsaleContract) onlyOwner {
-    crowdsaleContract == _crowdsaleContract;
-  }
-
-  function mint(address _to, uint256 _amount) onlyCrowdsaleContract canMint returns (bool) {
+  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     Mint(_to, _amount);
@@ -227,7 +218,7 @@ contract MintableBurnableToken is StandardToken, Ownable {
     return true;
   }
 
-  function finishMinting() onlyCrowdsaleContract returns (bool) {
+  function finishMinting() onlyOwner returns (bool) {
     mintingFinished = true;
     MintFinished();
     return true;
@@ -292,7 +283,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   
   using SafeMath for uint;
 
-  Nafen tokenContract;
+  Nafen public tokenContract;
 
   struct Phase {
   uint start;
@@ -305,6 +296,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
 
   address multisig;
   address tokenAddress;
+  address teamAddress;
   address CrowdsaleManager;
   uint256 public centHardcap;
   uint256 public centSoftcap;
@@ -315,11 +307,11 @@ contract Crowdsale is Ownable, ReentrancyGuard {
 
   Phase[] phases; // phases of crowdsale
 
-  bool isUnderHardCap = true;
+  bool public isUnderHardCap = true;
 
   function Crowdsale(
-  address tokenAddress,
   address _multisig,
+  address _teamAddress,
   uint _startA,
   uint _periodA,
   uint _startB,
@@ -328,7 +320,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   uint _periodC,
   uint _priceEUR)
   {
-    tokenContract = Nafen(tokenAddress);
+    tokenContract = new Nafen();
     multisig = _multisig;
     phases.push(Phase(_startA, _periodA * day));
     phases.push(Phase(_startB, _periodB * day));
@@ -348,6 +340,8 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     uint256 collectedEther = this.balance - unwantedBalance;
     bool isSent = multisig.call.gas(3000000).value(collectedEther)();
     require(isSent);
+    uint issuedTokenSupply = tokenContract.totalSupply();
+    uint restrictedTokens = issuedTokenSupply.mul(5).div(100 - 5);
     tokenContract.finishMinting();
   }
 
@@ -393,7 +387,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   }
 
   
-  function isSaleIsON() view returns(bool ){
+  function isSaleIsON() view returns(bool ) {
 
     if ((now > phases[0].start && now < phases[0].start + phases[0].period)
     || (now > phases[1].start && now < phases[1].start + phases[1].period)
@@ -455,10 +449,11 @@ contract Crowdsale is Ownable, ReentrancyGuard {
       isUnderHardCap = false;
       uint256 changeValueCent = collectedCent + valueCent - centHardcap;
       valueCent -= changeValueCent;
+      uint256 oldValueWei = valueWEI;
       valueWEI = valueCent.mul(priceEUR);
       tokens = rateCent.mul(valueCent);
       collectedCent += valueCent;
-      uint256 change = msg.value - valueWEI;
+      uint256 change = oldValueWei - valueWEI;
       bool isSent = msg.sender.call.gas(3000000).value(change)();
       require(isSent);
     }
