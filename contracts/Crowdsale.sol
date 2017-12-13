@@ -294,18 +294,17 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   mapping(address => uint) public receivedTokensAmount;
   mapping(address => bool) public whiteList;
 
-  address multisig;
-  address tokenAddress;
-  address teamAddress;
-  address CrowdsaleManager;
+  address public multisig;
+  address public teamAddress;
+  address public CrowdsaleManager;
   uint256 public centHardcap;
   uint256 public centSoftcap;
   uint256 day = 864000; // sec in day
-  uint256 priceEUR; // wei in one cent
-  uint256 collectedCent;
-  uint256 unwantedBalance = 0;
+  uint256 public priceEUR; // wei in one cent
+  uint256 public collectedCent;
+  uint256 public unwantedBalance = 0;
 
-  Phase[] phases; // phases of crowdsale
+  Phase[] public phases; // phases of crowdsale
 
   bool public isUnderHardCap = true;
 
@@ -320,7 +319,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   uint _periodC,
   uint _priceEUR)
   {
-    require(priceEUR!=0);
+    require(_priceEUR!=0);
     tokenContract = new Nafen();
     multisig = _multisig;
     phases.push(Phase(_startA, _periodA * day));
@@ -411,9 +410,21 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     require(isSent);
   }
 
-  function forcedRefund() {
-    require((balances[msg.sender] != 0 && whiteList[msg.sender] == false) &&
-    (receivedTokensAmount[msg.sender] == tokenContract.burnedTokens(msg.sender)));
+  function startPhaseD(uint256 _period) onlyCrowdsaleManagerOrOwner {
+    require(unwantedBalance != 0);
+    phases.push(Phase(now, _period * day));
+  }
+
+  modifier isPhaseD() {
+    require((now > phases[3].start) && (now < phases[3].start + phases[3].period));
+    _;
+  }
+
+  function forcedRefund() isPhaseD {
+    require(
+    (balances[msg.sender] != 0 && whiteList[msg.sender] == false) &&
+    (receivedTokensAmount[msg.sender] == tokenContract.burnedTokens(msg.sender))
+    );
     uint valueToReturn = balances[msg.sender];
     balances[msg.sender] = 0;
     receivedTokensAmount[msg.sender] = 0;
