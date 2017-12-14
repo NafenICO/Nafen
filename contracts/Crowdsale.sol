@@ -464,11 +464,11 @@ contract Crowdsale is Ownable, ReentrancyGuard {
       uint256 oldValueWei = valueWEI;
       valueWEI = valueCent.mul(priceEUR);
       tokens = rateCent.mul(valueCent);
-      collectedCent += valueCent;
       uint256 change = oldValueWei - valueWEI;
       bool isSent = msg.sender.call.gas(3000000).value(change)();
       require(isSent);
     }
+    collectedCent += valueCent;
     tokenContract.mint(msg.sender, tokens);
     balances[msg.sender] = balances[msg.sender].add(valueWEI);
   }
