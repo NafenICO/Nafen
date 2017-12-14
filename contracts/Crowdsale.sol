@@ -357,7 +357,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
 
   function removeFromBlackList(address _investorAddress) onlyCrowdsaleManagerOrOwner  {
     whiteList[_investorAddress] = true;
-    unwantedBalance = unwantedBalance.add(balances[_investorAddress]);
+    unwantedBalance = unwantedBalance.sub(balances[_investorAddress]);
     collectedCent = collectedCent.add(balances[_investorAddress].div(priceEUR));
   }
 
