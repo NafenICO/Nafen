@@ -351,14 +351,14 @@ contract Crowdsale is Ownable, ReentrancyGuard {
 
   function addToBlackList(address _badInvestor) onlyCrowdsaleManagerOrOwner {
     whiteList[_badInvestor] = false;
-    unwantedBalance += balances[_badInvestor];
-    collectedCent -= balances[_badInvestor].div(priceEUR);
+    unwantedBalance = unwantedBalance.add(balances[_badInvestor]);
+    collectedCent = collectedCent.sub(balances[_badInvestor].div(priceEUR));
   }
 
   function removeFromBlackList(address _investorAddress) onlyCrowdsaleManagerOrOwner  {
     whiteList[_investorAddress] = true;
-    unwantedBalance -= balances[_investorAddress];
-    collectedCent += balances[_investorAddress].div(priceEUR);
+    unwantedBalance = unwantedBalance.add(balances[_investorAddress]);
+    collectedCent = collectedCent.add(balances[_investorAddress].div(priceEUR));
   }
 
   function setCrowdsaleManager(address _manager) onlyOwner {
@@ -371,7 +371,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     require(collectedCent + valueCent < centHardcap); // ???
     uint256 rateCent = getRate();
     uint256 tokensAmount = rateCent.mul(valueCent);
-    collectedCent += valueCent;
+    collectedCent = collectedCent.add(valueCent);
     tokenContract.mint(_to, tokensAmount);
   }
 
@@ -468,7 +468,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
       bool isSent = msg.sender.call.gas(3000000).value(change)();
       require(isSent);
     }
-    collectedCent += valueCent;
+    collectedCent = collectedCent.add(valueCent);
     tokenContract.mint(msg.sender, tokens);
     balances[msg.sender] = balances[msg.sender].add(valueWEI);
   }
