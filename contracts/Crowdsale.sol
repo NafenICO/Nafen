@@ -333,6 +333,8 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   // change phase's start and period
   function shiftPhase(uint phaseIndex, uint newStart, uint newPeriod) onlyCrowdsaleManagerOrOwner {
     require(now < phases[phaseIndex].start && now < newStart && newPeriod > 0);
+    phases[phaseIndex].start = newStart;
+    phases[phaseIndex].period = newPeriod;
   }
 
   function finishCrowdsale() onlyOwner {
