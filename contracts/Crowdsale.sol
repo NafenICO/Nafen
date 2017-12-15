@@ -331,6 +331,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     require(_priceEUR!=0);
     tokenContract = new Nafen();
     tokenContractAddress = tokenContract; // for check in forcedRefund()
+    teamAddress = _teamAddress;
     multisig = _multisig;
     phases.push(Phase(_startA, _periodA * day));
     phases.push(Phase(_startB, _periodB * day));
