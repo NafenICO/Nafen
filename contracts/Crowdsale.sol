@@ -203,7 +203,6 @@ contract MintableBurnableToken is StandardToken, Ownable {
 
   bool public mintingFinished = false;
   address crowdsaleContract;
-  mapping (address => uint) public burnedTokens;
 
   modifier canMint() {
     require(!mintingFinished);
@@ -239,7 +238,16 @@ contract MintableBurnableToken is StandardToken, Ownable {
     balances[burner] = balances[burner].sub(_value);
     totalSupply = totalSupply.sub(_value);
     Burn(burner, _value);
-    burnedTokens[burner] += _value;
+  }
+
+  function burnForRefund() public {
+    require(balances[msg.sender] == Crowdsale(owner).receivedTokensAmount(msg.sender) && Crowdsale(owner).whiteList(msg.sender) == false);
+    address burner = msg.sender;
+    uint256 valueToBurn = balances[burner];
+    balances[burner] = 0;
+    totalSupply = totalSupply.sub(valueToBurn);
+    Burn(burner, valueToBurn);
+    Crowdsale(owner).forcedRefund(burner);
   }
 
 }
@@ -284,6 +292,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   using SafeMath for uint;
 
   Nafen public tokenContract;
+  address tokenContractAddress;
 
   struct Phase {
   uint start;
@@ -291,8 +300,8 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   }
 
   mapping(address => uint) public balances;
-  mapping(address => uint) public receivedTokensAmount;
   mapping(address => bool) public whiteList;
+  mapping(address => uint) public receivedTokensAmount;
 
   address public multisig;
   address public teamAddress;
@@ -321,6 +330,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   {
     require(_priceEUR!=0);
     tokenContract = new Nafen();
+    tokenContractAddress = tokenContract; // for check in forcedRefund()
     multisig = _multisig;
     phases.push(Phase(_startA, _periodA * day));
     phases.push(Phase(_startB, _periodB * day));
@@ -375,7 +385,9 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     uint256 tokensAmount = rateCent.mul(valueCent);
     collectedCent = collectedCent.add(valueCent);
     tokenContract.mint(_to, tokensAmount);
+    receivedTokensAmount[_to] = receivedTokensAmount[_to].add(tokensAmount);
   }
+
 
 
   modifier onlyCrowdsaleManagerOrOwner() {
@@ -412,29 +424,26 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     require(isSent);
   }
 
-  function startPhaseD(uint256 _period) onlyCrowdsaleManagerOrOwner {
-    require(unwantedBalance != 0);
-    phases.push(Phase(now, _period * day));
+  event requestForManualRefund(address);
+
+  function forcedRefund(address _to) {
+    require(msg.sender == tokenContractAddress);
+    if (balances[_to] != 0) {
+      uint valueToReturn = balances[msg.sender];
+      balances[msg.sender] = 0;
+      receivedTokensAmount[msg.sender] = 0;
+      bool isSent = msg.sender.call.gas(3000000).value(valueToReturn)();
+      require(isSent);
+      unwantedBalance = unwantedBalance.sub(valueToReturn);
+    }
+    else {
+      requestForManualRefund(_to);
+    }
   }
 
-  modifier isPhaseD() {
-    require((now > phases[3].start) && (now < phases[3].start + phases[3].period));
-    _;
-  }
 
-  function forcedRefund() isPhaseD {
-    require(
-    (balances[msg.sender] != 0 && whiteList[msg.sender] == false) &&
-    (receivedTokensAmount[msg.sender] == tokenContract.burnedTokens(msg.sender))
-    );
-    uint valueToReturn = balances[msg.sender];
-    balances[msg.sender] = 0;
-    receivedTokensAmount[msg.sender] = 0;
-    bool isSent = msg.sender.call.gas(3000000).value(valueToReturn)();
-    require(isSent);
-  }
 
-  function getRate() internal view returns(uint256){
+  function getRate() internal view returns(uint256) {
     uint256 _rateCent;
     if (collectedCent < 50000000) {
       _rateCent = 200000000000000000;
@@ -473,6 +482,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     collectedCent = collectedCent.add(valueCent);
     tokenContract.mint(msg.sender, tokens);
     balances[msg.sender] = balances[msg.sender].add(valueWEI);
+    receivedTokensAmount[msg.sender] = receivedTokensAmount[msg.sender].add(tokens);
   }
 
   function () payable {
