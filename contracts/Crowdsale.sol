@@ -374,6 +374,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     whiteList[_investorAddress] = true;
     unwantedBalance = unwantedBalance.sub(balances[_investorAddress]);
     collectedCent = collectedCent.add(balances[_investorAddress].div(priceEUR));
+    collectedCent = collectedCent.add(balancesInCent[_badInvestor]);
   }
 
   function setCrowdsaleManager(address _manager) onlyOwner {
@@ -441,6 +442,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
       unwantedBalance = unwantedBalance.sub(valueToReturn);
     }
     else {
+      collectedCent = collectedCent.sub(balancesInCent[_badInvestor]);
       requestForManualRefund(_to);
     }
   }
