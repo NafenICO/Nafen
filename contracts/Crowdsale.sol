@@ -384,7 +384,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     require(collectedCent + valueCent < centHardcap); // ???
     uint256 rateCent = getRate();
     uint256 tokensAmount = rateCent.mul(valueCent);
-    collectedCent = collectedCent.add(valueCent);
+    collectedCent += collectedCent.add(valueCent);
     tokenContract.mint(_to, tokensAmount);
     receivedTokensAmount[_to] = receivedTokensAmount[_to].add(tokensAmount);
   }
