@@ -300,6 +300,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   }
 
   mapping(address => uint) public balances;
+  mapping(address => uint) public balancesInCent;
   mapping(address => bool) public whiteList;
   mapping(address => uint) public receivedTokensAmount;
 
@@ -366,6 +367,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     whiteList[_badInvestor] = false;
     unwantedBalance = unwantedBalance.add(balances[_badInvestor]);
     collectedCent = collectedCent.sub(balances[_badInvestor].div(priceEUR));
+    collectedCent = collectedCent.sub(balancesInCent[_badInvestor]);
   }
 
   function removeFromBlackList(address _investorAddress) onlyCrowdsaleManagerOrOwner  {
@@ -384,9 +386,10 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     require(collectedCent + valueCent < centHardcap); // ???
     uint256 rateCent = getRate();
     uint256 tokensAmount = rateCent.mul(valueCent);
-    collectedCent += collectedCent.add(valueCent);
+    collectedCent = collectedCent.add(valueCent);
     tokenContract.mint(_to, tokensAmount);
     receivedTokensAmount[_to] = receivedTokensAmount[_to].add(tokensAmount);
+    balancesInCent[_to] = balancesInCent[_to].add(valueCent);
   }
 
 
