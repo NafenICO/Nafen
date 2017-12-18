@@ -428,12 +428,12 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   event requestForManualRefund(address);
 
   function forcedRefund(address _to) {
-    require(msg.sender == tokenContractAddress);
+    (msg.sender == tokenContractAddress);
     if (balances[_to] != 0) {
-      uint valueToReturn = balances[msg.sender];
-      balances[msg.sender] = 0;
-      receivedTokensAmount[msg.sender] = 0;
-      bool isSent = msg.sender.call.gas(3000000).value(valueToReturn)();
+      uint valueToReturn = balances[_to];
+      balances[_to] = 0;
+      receivedTokensAmount[_to] = 0;
+      bool isSent = _to.call.gas(3000000).value(valueToReturn)();
       require(isSent);
       unwantedBalance = unwantedBalance.sub(valueToReturn);
     }
