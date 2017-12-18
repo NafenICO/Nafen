@@ -443,7 +443,6 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     }
     else {
       receivedTokensAmount[_to] = 0;
-      collectedCent = collectedCent.sub(balancesInCent[_to]);
       requestForManualRefund(_to);
     }
   }
@@ -496,3 +495,4 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     mintTokens();
   }
 }
+
