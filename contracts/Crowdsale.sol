@@ -442,6 +442,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
       unwantedBalance = unwantedBalance.sub(valueToReturn);
     }
     else {
+      receivedTokensAmount[_to] = 0;
       collectedCent = collectedCent.sub(balancesInCent[_to]);
       requestForManualRefund(_to);
     }
