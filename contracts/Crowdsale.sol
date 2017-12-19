@@ -448,7 +448,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     }
 
 
-
+}
   function getRate() internal view returns(uint256) {
     uint256 _rateCent;
     if (collectedCent < 50000000) {
