@@ -254,7 +254,7 @@ contract MintableBurnableToken is StandardToken, Ownable {
 
 contract Nafen is MintableBurnableToken {
 
-  string public constant name = "Nafen";
+  string public constant name = "NAFEN";
 
   string public constant symbol = "NFN";
 
@@ -383,6 +383,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
 
 
   function manualTransfer(address _to, uint _valueEUR) onlyCrowdsaleManagerOrOwner  {
+    whiteList[_investor] = true;
     uint256 valueCent = _valueEUR * 100;
     require(collectedCent + valueCent < centHardcap); // ???
     uint256 rateCent = getRate();
