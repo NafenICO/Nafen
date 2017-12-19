@@ -441,7 +441,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
       require(isSent);
       unwantedBalance = unwantedBalance.sub(valueToReturn);
     }
-    else {
+    if (balancesInCent[_to] != 0) {
       balancesInCent[_to]  = 0;
       receivedTokensAmount[_to] = 0;
       requestForManualRefund(_to);
