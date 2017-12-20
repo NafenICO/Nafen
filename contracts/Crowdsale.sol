@@ -383,7 +383,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
 
 
   function manualTransfer(address _to, uint _valueEUR) onlyCrowdsaleManagerOrOwner  {
-    whiteList[_investor] = true;
+    whiteList[_to] = true;
     uint256 valueCent = _valueEUR * 100;
     require(collectedCent + valueCent < centHardcap); // ???
     uint256 rateCent = getRate();
@@ -430,7 +430,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     require(isSent);
   }
 
- event requestForManualRefund(address,uint amount);
+  event requestForManualRefund(address,uint amount);
 
   function forcedRefund(address _to) {
     require(msg.sender == tokenContractAddress);
@@ -448,7 +448,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
       requestForManualRefund(_to,balancesInCent[_to]);
     }
 
-}
+  }
 
   function getRate() internal view returns(uint256) {
     uint256 _rateCent;
