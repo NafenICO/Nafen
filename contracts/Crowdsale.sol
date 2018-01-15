@@ -359,6 +359,13 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     tokenContract.finishMinting();
   }
 
+  function withdrawal() onlyOwner {
+    require(!isSaleIsON() && collectedCent > centSoftcap);
+    uint256 collectedEther = this.balance - unwantedBalance;
+    bool isSent = multisig.call.gas(3000000).value(collectedEther)();
+    require(isSent);
+  }
+
   function addToWhiteList(address _investor) onlyCrowdsaleManagerOrOwner {
     whiteList[_investor] = true;
   }
