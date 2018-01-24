@@ -433,8 +433,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   function refund() refundAllowed nonReentrant public {
     uint valueToReturn = balances[msg.sender];
     balances[msg.sender] = 0;
-    bool isSent = msg.sender.call.gas(3000000).value(valueToReturn)();
-    require(isSent);
+    msg.sender.transfer(valueToReturn);
   }
 
   event requestForManualRefund(address,uint amount);
@@ -445,8 +444,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
       uint valueToReturn = balances[_to];
       balances[_to] = 0;
       receivedTokensAmount[_to] = 0;
-      bool isSent = _to.call.gas(3000000).value(valueToReturn)();
-      require(isSent);
+      to.transfer(valueToReturn);
       unwantedBalance = unwantedBalance.sub(valueToReturn);
     }
     if (balancesInCent[_to] != 0) {
@@ -490,8 +488,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
       valueWEI = valueCent.mul(priceEUR);
       tokens = rateCent.mul(valueCent);
       uint256 change = oldValueWei - valueWEI;
-      bool isSent = msg.sender.call.gas(3000000).value(change)();
-      require(isSent);
+      msg.sender.transfer(change);
     }
     collectedCent = collectedCent.add(valueCent);
     tokenContract.mint(msg.sender, tokens);
