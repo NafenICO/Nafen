@@ -124,18 +124,17 @@ contract StandardToken is ERC20, BasicToken {
   }
 
   /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
-  function approve(address _spender, uint256 _value) returns (bool) {
 
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
+  function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
@@ -259,6 +258,20 @@ contract Nafen is MintableBurnableToken {
   string public constant symbol = "NFN";
 
   uint32 public constant decimals = 18;
+
+  modifier notLocked() {
+    require(mintingFinished);
+    _;
+  }
+
+  function transfer(address _to, uint256 _value) public notLocked returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address from, address to, uint256 value) public notLocked returns (bool) {
+    return super.transferFrom(from, to, value);
+  }
+
 
 }
 
@@ -444,7 +457,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
       uint valueToReturn = balances[_to];
       balances[_to] = 0;
       receivedTokensAmount[_to] = 0;
-      to.transfer(valueToReturn);
+      _to.transfer(valueToReturn);
       unwantedBalance = unwantedBalance.sub(valueToReturn);
     }
     if (balancesInCent[_to] != 0) {
