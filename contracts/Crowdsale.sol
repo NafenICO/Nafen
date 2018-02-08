@@ -413,6 +413,9 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     whiteList[_to] = true;
     uint256 valueCent = _valueEUR * 100;
     //require(collectedCent + valueCent < centHardcap); // ???
+    if (collectedCent + valueCent >= centHardcap){
+      isUnderHardCap = false;
+    }
     uint256 rateCent = getRate();
     uint256 tokensAmount = rateCent.mul(valueCent);
     collectedCent = collectedCent.add(valueCent);
