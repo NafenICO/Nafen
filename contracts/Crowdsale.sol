@@ -410,6 +410,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
 
 
   function manualTransfer(address _to, uint _valueEUR) onlyCrowdsaleManagerOrOwner  {
+    require(isUnderHardCap);
     whiteList[_to] = true;
     uint256 valueCent = _valueEUR * 100;
     //require(collectedCent + valueCent < centHardcap); // ???
