@@ -364,7 +364,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
 
   function finishCrowdsale() onlyOwner {
     require(collectedCent > centSoftcap);
-    uint256 collectedEther = this.balance - unwantedBalance;
+    uint256 collectedEther = this.balance.sub(unwantedBalance);
     bool isSent = multisig.call.gas(3000000).value(collectedEther)();
     require(isSent);
     uint issuedTokenSupply = tokenContract.totalSupply();
@@ -374,7 +374,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
 
   function withdrawal() onlyOwner {
     require(!isSaleIsON() && collectedCent > centSoftcap);
-    uint256 collectedEther = this.balance - unwantedBalance;
+    uint256 collectedEther = this.balance.sub(unwantedBalance);
     bool isSent = multisig.call.gas(3000000).value(collectedEther)();
     require(isSent);
   }
