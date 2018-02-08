@@ -319,12 +319,19 @@ contract Crowdsale is Ownable, ReentrancyGuard {
 
   address public multisig;
   address public teamAddress;
+
   address public CrowdsaleManager;
+  address public oracle;
+
   uint256 public centHardcap;
   uint256 public centSoftcap;
+
   uint256 day = 864000; // sec in day
+
   uint256 public priceEUR; // wei in one cent
+
   uint256 public collectedCent;
+
   uint256 public unwantedBalance = 0;
 
   Phase[] public phases; // phases of crowdsale
@@ -405,7 +412,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   function manualTransfer(address _to, uint _valueEUR) onlyCrowdsaleManagerOrOwner  {
     whiteList[_to] = true;
     uint256 valueCent = _valueEUR * 100;
-    require(collectedCent + valueCent < centHardcap); // ???
+    //require(collectedCent + valueCent < centHardcap); // ???
     uint256 rateCent = getRate();
     uint256 tokensAmount = rateCent.mul(valueCent);
     collectedCent = collectedCent.add(valueCent);
@@ -443,6 +450,11 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     _;
   }
 
+  modifier onlyOracle() {
+    require(msg.sender == oracle);
+    _;
+  }
+
   function refund() refundAllowed nonReentrant public {
     uint valueToReturn = balances[msg.sender];
     balances[msg.sender] = 0;
@@ -465,7 +477,10 @@ contract Crowdsale is Ownable, ReentrancyGuard {
       receivedTokensAmount[_to] = 0;
       requestForManualRefund(_to,balancesInCent[_to]);
     }
+  }
 
+  function changePriceEUR(uint256 _priceEUR) onlyOracle {
+    priceEUR = _priceEUR;
   }
 
   function getRate() internal view returns(uint256) {
