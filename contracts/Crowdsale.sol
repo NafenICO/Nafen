@@ -401,7 +401,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   uint _periodC,
   uint _priceEUR)
   {
-    require(_priceEUR!=0);
+    require(_priceEUR!=0 && _priceEUR >0);
     tokenContract = new Nafen();
     tokenContractAddress = tokenContract; // for check in forcedRefund()
     teamAddress = _teamAddress;
