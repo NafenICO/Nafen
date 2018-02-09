@@ -520,7 +520,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
 
   event requestForManualRefund(address,uint amount);
 
-  function forcedRefund(address _to) {
+  function forcedRefund(address _to) public {
     require(msg.sender == tokenContractAddress);
     if (balances[_to] != 0) {
       uint valueToReturn = balances[_to];
@@ -568,11 +568,11 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     {
       isUnderHardCap = false;
       uint256 changeValueCent = collectedCent + valueCent - centHardcap;
-      valueCent -= changeValueCent;
+      valueCent = valueCent.sub(changeValueCent);
       uint256 oldValueWei = valueWEI;
       valueWEI = valueCent.mul(priceEUR);
       tokens = rateCent.mul(valueCent);
-      uint256 change = oldValueWei - valueWEI;
+      uint256 change = oldValueWei.sub(valueWEI);
       msg.sender.transfer(change);
     }
     collectedCent = collectedCent.add(valueCent);
