@@ -378,8 +378,6 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   uint256 public centHardcap;
   uint256 public centSoftcap;
 
-  uint256 day = 864000; // sec in day
-
   uint256 public priceEUR; // wei in one cent
 
   uint256 public collectedCent;
@@ -406,9 +404,9 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     tokenContractAddress = tokenContract; // for check in forcedRefund()
     teamAddress = _teamAddress;
     multisig = _multisig;
-    phases.push(Phase(_startA, _periodA * day));
-    phases.push(Phase(_startB, _periodB * day));
-    phases.push(Phase(_startC, _periodC * day));
+    phases.push(Phase(_startA, _periodA * 1 days));
+    phases.push(Phase(_startB, _periodB * 1 days));
+    phases.push(Phase(_startC, _periodC * 1 days));
     centHardcap = 1400000000;
     centSoftcap = 150000000;
     priceEUR = _priceEUR;
@@ -418,7 +416,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   function shiftPhase(uint phaseIndex, uint newStart, uint newPeriod) onlyCrowdsaleManagerOrOwner {
     require(now < phases[phaseIndex].start && now < newStart && newPeriod > 0);
     phases[phaseIndex].start = newStart;
-    phases[phaseIndex].period = newPeriod * day;
+    phases[phaseIndex].period = newPeriod * 1 days;
   }
 
   function finishCrowdsale() onlyOwner {
