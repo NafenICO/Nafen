@@ -7,8 +7,8 @@ pragma solidity ^0.4.18;
  */
 contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) view returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 /**
@@ -16,9 +16,9 @@ contract ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 /**
@@ -102,7 +102,7 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) view returns (uint256 balance) {
+  function balanceOf(address _owner) public view returns (uint256 balance) {
     return balances[_owner];
   }
 }
@@ -215,7 +215,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
 
@@ -231,7 +231,7 @@ contract Ownable {
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner {
+  function transferOwnership(address newOwner) public onlyOwner  {
     require(newOwner != address(0));
     owner = newOwner;
   }
@@ -258,7 +258,7 @@ contract MintableBurnableToken is StandardToken, Ownable {
     _;
   }
 
-  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
+  function mint(address _to, uint256 _amount) public onlyOwner canMint returns (bool) {
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     Mint(_to, _amount);
@@ -266,7 +266,7 @@ contract MintableBurnableToken is StandardToken, Ownable {
     return true;
   }
 
-  function finishMinting() onlyOwner returns (bool) {
+  function finishMinting() public onlyOwner returns (bool) {
     mintingFinished = true;
     MintFinished();
     return true;
@@ -397,7 +397,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   uint _periodB,
   uint _startC,
   uint _periodC,
-  uint _priceEUR)
+  uint _priceEUR) public
   {
     require(_priceEUR!=0 && _priceEUR >0);
     tokenContract = new Nafen();
@@ -413,13 +413,13 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   }
 
   // change phase's start and period
-  function shiftPhase(uint phaseIndex, uint newStart, uint newPeriod) onlyCrowdsaleManagerOrOwner {
+  function shiftPhase(uint phaseIndex, uint newStart, uint newPeriod) public onlyCrowdsaleManagerOrOwner  {
     require(now < phases[phaseIndex].start && now < newStart && newPeriod > 0);
     phases[phaseIndex].start = newStart;
     phases[phaseIndex].period = newPeriod * 1 days;
   }
 
-  function finishCrowdsale() onlyOwner {
+  function finishCrowdsale() public onlyOwner  {
     require(collectedCent > centSoftcap);
     uint256 collectedEther = this.balance.sub(unwantedBalance);
     bool isSent = multisig.call.gas(3000000).value(collectedEther)();
@@ -430,37 +430,37 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     tokenContract.finishMinting();
   }
 
-  function withdrawal() onlyOwner {
+  function withdrawal() public onlyOwner  {
     require(!isSaleIsON() && collectedCent > centSoftcap);
     uint256 collectedEther = this.balance.sub(unwantedBalance);
     bool isSent = multisig.call.gas(3000000).value(collectedEther)();
     require(isSent);
   }
 
-  function addToWhiteList(address _investor) onlyCrowdsaleManagerOrOwner {
+  function addToWhiteList(address _investor) public onlyCrowdsaleManagerOrOwner  {
     whiteList[_investor] = true;
   }
 
-  function addToBlackList(address _badInvestor) onlyCrowdsaleManagerOrOwner {
+  function addToBlackList(address _badInvestor) public onlyCrowdsaleManagerOrOwner  {
     whiteList[_badInvestor] = false;
     unwantedBalance = unwantedBalance.add(balances[_badInvestor]);
     collectedCent = collectedCent.sub(balances[_badInvestor].div(priceEUR));
     collectedCent = collectedCent.sub(balancesInCent[_badInvestor]);
   }
 
-  function removeFromBlackList(address _investorAddress) onlyCrowdsaleManagerOrOwner  {
+  function removeFromBlackList(address _investorAddress) public onlyCrowdsaleManagerOrOwner  {
     whiteList[_investorAddress] = true;
     unwantedBalance = unwantedBalance.sub(balances[_investorAddress]);
     collectedCent = collectedCent.add(balances[_investorAddress].div(priceEUR));
     collectedCent = collectedCent.add(balancesInCent[_investorAddress]);
   }
 
-  function setCrowdsaleManager(address _manager) onlyOwner {
+  function setCrowdsaleManager(address _manager) public onlyOwner  {
     CrowdsaleManager = _manager;
   }
 
 
-  function manualTransfer(address _to, uint _valueEUR) onlyCrowdsaleManagerOrOwner  {
+  function manualTransfer(address _to, uint _valueEUR) public onlyCrowdsaleManagerOrOwner   {
     require(isUnderHardCap);
     whiteList[_to] = true;
     uint256 valueCent = _valueEUR * 100;
@@ -489,7 +489,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
   }
 
 
-  function isSaleIsON() view returns(bool ) {
+  function isSaleIsON()  view public returns(bool ) {
 
     if ((now > phases[0].start && now < phases[0].start + phases[0].period)
     || (now > phases[1].start && now < phases[1].start + phases[1].period)
@@ -510,7 +510,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     _;
   }
 
-  function refund() refundAllowed nonReentrant public {
+  function refund() public refundAllowed nonReentrant  {
     uint valueToReturn = balances[msg.sender];
     balances[msg.sender] = 0;
     msg.sender.transfer(valueToReturn);
@@ -534,11 +534,11 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     }
   }
 
-  function changePriceEUR(uint256 _priceEUR) onlyOracle {
+  function changePriceEUR(uint256 _priceEUR) public onlyOracle  {
     priceEUR = _priceEUR;
   }
 
-  function setOracle(address _oracle) onlyOwner {
+  function setOracle(address _oracle) public onlyOwner  {
     oracle = _oracle;
   }
 
@@ -560,7 +560,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     return _rateCent;
   }
 
-  function mintTokens() nonReentrant saleIsOn  payable {
+  function mintTokens() nonReentrant saleIsOn public payable {
     require(isUnderHardCap && whiteList[msg.sender]);
     uint256 valueWEI = msg.value;
     uint256 valueCent = valueWEI.div(priceEUR);
@@ -583,7 +583,7 @@ contract Crowdsale is Ownable, ReentrancyGuard {
     receivedTokensAmount[msg.sender] = receivedTokensAmount[msg.sender].add(tokens);
   }
 
-  function () payable {
+  function () external payable {
     mintTokens();
   }
 
